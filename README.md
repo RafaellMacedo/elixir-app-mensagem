@@ -150,3 +150,34 @@ Testar fluxo completo
 Docker
 README
 Revisão final
+
+# 1. Usuários e contatos ← próxima etapa
+
+Listar usuários disponíveis
+Adicionar usuário aos contatos
+Remover contato
+Listar meus contatos
+Garantir que um usuário só altere os próprios contatos
+
+# 2. Conversas privadas
+
+Criar/iniciar conversa com um contato
+Persistir conversa
+Persistir mensagens
+Listar minhas conversas
+Buscar histórico cronológico
+
+# 3. Grupos
+
+Criar grupo
+Definir nome e criador
+Adicionar contatos como membros
+Listar grupos
+Enviar mensagens no grupo
+Histórico persistido
+
+# 4. Tempo real
+
+Aqui entra uma das partes mais interessantes do Phoenix:
+
+Phoenix Channels / WebSockets

@@ -20,8 +20,12 @@ defmodule MensagemWeb.Router do
     pipe_through [:api, :authenticated]
 
     get "/me", AuthController, :me
-  end
 
+    get "/contacts", ContactController, :index
+    post "/contacts", ContactController, :create
+    delete "/contacts/:id", ContactController, :delete
+  end
+  
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:mensagem, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put

@@ -2,10 +2,15 @@ defmodule Mensagem.User do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias Mensagem.Contact
+
   schema "users" do
     field :name, :string
     field :email, :string
     field :password_hash, :string
+
+    has_many :contacts, Contact
+    has_many :contact_users, through: [:contacts, :contact]
 
     timestamps(type: :utc_datetime)
   end
