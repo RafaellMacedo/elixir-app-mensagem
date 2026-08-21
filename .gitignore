@@ -1,0 +1,14 @@
+# Elixir
+backend/_build/
+backend/deps/
+backend/.elixir_ls/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Environment
+.env
+
+# OS
+.DS_Store

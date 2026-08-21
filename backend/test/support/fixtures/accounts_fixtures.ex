@@ -1,0 +1,22 @@
+defmodule Mensagem.AccountsFixtures do
+  @moduledoc """
+  This module defines test helpers for creating
+  entities via the `Mensagem.Accounts` context.
+  """
+
+  @doc """
+  Generate a user.
+  """
+  def user_fixture(attrs \\ %{}) do
+    {:ok, user} =
+      attrs
+      |> Enum.into(%{
+        email: "some email",
+        name: "some name",
+        password_hash: "some password_hash"
+      })
+      |> Mensagem.Accounts.create_user()
+
+    user
+  end
+end
