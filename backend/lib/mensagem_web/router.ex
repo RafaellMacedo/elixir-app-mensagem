@@ -24,6 +24,18 @@ defmodule MensagemWeb.Router do
     get "/contacts", ContactController, :index
     post "/contacts", ContactController, :create
     delete "/contacts/:id", ContactController, :delete
+
+    get "/conversations", ConversationController, :index
+    post "/conversations", ConversationController, :create
+    get "/conversations/:id", ConversationController, :show
+
+    get "/conversations/:conversation_id/messages",
+      MessageController,
+      :index
+
+    post "/conversations/:conversation_id/messages",
+      MessageController,
+      :create
   end
   
   # Enable LiveDashboard and Swoosh mailbox preview in development
