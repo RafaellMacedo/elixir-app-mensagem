@@ -8,6 +8,8 @@ services:
       - ./backend:/app
     ports:
       - "4000:4000"
+    environment:
+      JWT_SECRET: "minha-chave-secreta-super-segura"
     depends_on:
       postgres:
         condition: service_healthy

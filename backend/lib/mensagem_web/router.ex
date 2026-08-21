@@ -5,10 +5,21 @@ defmodule MensagemWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :authenticated do
+    plug MensagemWeb.AuthPlug
+  end
+
   scope "/api", MensagemWeb do
     pipe_through :api
 
     post "/auth/register", AuthController, :register
+    post "/auth/login", AuthController, :login
+  end
+
+  scope "/api", MensagemWeb do
+    pipe_through [:api, :authenticated]
+
+    get "/me", AuthController, :me
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
