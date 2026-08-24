@@ -4,6 +4,7 @@ import { useAuthStore } from '../stores/auth'
 
 import ContactsView from '../views/ContactsView.vue'
 import ConversationsView from '../views/ConversationsView.vue'
+import GroupsView from '../views/GroupsView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 
@@ -36,6 +37,15 @@ const router = createRouter({
       path: '/conversations',
       name: 'conversations',
       component: ConversationsView,
+      meta: {
+        requiresAuth: true,
+      },
+    },
+
+    {
+      path: '/groups',
+      name: 'groups',
+      component: GroupsView,
       meta: {
         requiresAuth: true,
       },

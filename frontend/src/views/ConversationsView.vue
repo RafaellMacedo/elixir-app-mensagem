@@ -113,6 +113,8 @@ onBeforeUnmount(() => {
 
         <button @click="router.push('/contacts')">Contatos</button>
 
+        <button @click="router.push('/groups')">Grupos</button>
+
         <button @click="logout">Sair</button>
       </div>
     </header>

@@ -15,7 +15,3 @@ export interface CreateGroupRequest {
   name: string
   member_ids: number[]
 }
-
-export interface GroupsResponse {
-  groups: Group[]
-}
