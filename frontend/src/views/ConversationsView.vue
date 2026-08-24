@@ -112,7 +112,9 @@ onBeforeUnmount(() => {
             @click="selectConversation(conversation)"
           >
             <strong>
-              {{ conversation.name || `Conversa #${conversation.id}` }}
+              {{
+                conversation.contact?.name || conversation.name || `Conversa #${conversation.id}`
+              }}
             </strong>
 
             <span>
@@ -126,7 +128,11 @@ onBeforeUnmount(() => {
         <template v-if="selectedConversation">
           <div class="chat-header">
             <h2>
-              {{ selectedConversation.name || `Conversa #${selectedConversation.id}` }}
+              {{
+                selectedConversation.contact?.name ||
+                selectedConversation.name ||
+                `Conversa #${selectedConversation.id}`
+              }}
             </h2>
           </div>
 

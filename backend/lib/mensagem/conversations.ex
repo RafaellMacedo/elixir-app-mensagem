@@ -1,6 +1,7 @@
 defmodule Mensagem.Conversations do
   import Ecto.Query
 
+  alias Mensagem.User
   alias Mensagem.Contact
   alias Mensagem.Conversation
   alias Mensagem.ConversationParticipant
@@ -20,6 +21,16 @@ defmodule Mensagem.Conversations do
     |> where([c, p], p.user_id == ^user_id)
     |> order_by([c], desc: c.updated_at)
     |> Repo.all()
+  end
+
+  def get_other_participant(user_id, conversation_id) do
+    User
+    |> join(:inner, [u], p in ConversationParticipant, on: p.user_id == u.id)
+    |> where(
+      [u, p],
+      p.conversation_id == ^conversation_id and u.id != ^user_id
+    )
+    |> Repo.one()
   end
 
   def get_conversation(user_id, conversation_id) do
