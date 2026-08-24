@@ -1,6 +1,6 @@
 import type { Channel } from 'phoenix'
 
-import { connectSocket } from './socketService'
+import { connectSocket, getSocket, setOnReconnect } from './socketService'
 
 export interface RealtimeMessage {
   id: number
@@ -12,11 +12,30 @@ export interface RealtimeMessage {
 
 let channel: Channel | null = null
 
-export function joinConversation(
+let currentConversationId: number | null = null
+
+let currentOnMessage: ((message: RealtimeMessage) => void) | null = null
+
+let hasConnectedBefore = false
+
+setOnReconnect(() => {
+  if (!hasConnectedBefore) {
+    hasConnectedBefore = true
+    return
+  }
+
+  reconnectConversation()
+})
+
+function createConversationChannel(
   conversationId: number,
   onMessage: (message: RealtimeMessage) => void,
-): Channel {
-  const socket = connectSocket()
+) {
+  const socket = getSocket()
+
+  if (!socket) {
+    throw new Error('WebSocket is not connected')
+  }
 
   if (channel) {
     channel.leave()
@@ -46,6 +65,28 @@ export function joinConversation(
   return channel
 }
 
+export function joinConversation(
+  conversationId: number,
+  onMessage: (message: RealtimeMessage) => void,
+): Channel {
+  connectSocket()
+
+  currentConversationId = conversationId
+  currentOnMessage = onMessage
+
+  return createConversationChannel(conversationId, onMessage)
+}
+
+export function reconnectConversation() {
+  if (!currentConversationId || !currentOnMessage) {
+    return
+  }
+
+  console.log(`Rejoining conversation:${currentConversationId}`)
+
+  createConversationChannel(currentConversationId, currentOnMessage)
+}
+
 export function sendMessage(content: string) {
   if (!channel) {
     throw new Error('Conversation channel is not connected')
@@ -63,6 +104,9 @@ export function leaveConversation() {
 
   channel.leave()
   channel = null
+
+  currentConversationId = null
+  currentOnMessage = null
 }
 
 export function getConversationChannel(): Channel | null {
