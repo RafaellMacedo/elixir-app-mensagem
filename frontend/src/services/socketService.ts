@@ -4,6 +4,12 @@ const SOCKET_URL = 'ws://localhost:4000/socket'
 
 let socket: Socket | null = null
 
+let onReconnect: (() => void) | null = null
+
+export function setOnReconnect(callback: () => void) {
+  onReconnect = callback
+}
+
 export function connectSocket(): Socket {
   if (socket) {
     return socket
@@ -23,6 +29,10 @@ export function connectSocket(): Socket {
 
   socket.onOpen(() => {
     console.log('WebSocket connected')
+
+    if (onReconnect) {
+      onReconnect()
+    }
   })
 
   socket.onError((error: unknown) => {
