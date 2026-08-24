@@ -9,7 +9,11 @@ defmodule MensagemWeb.ConversationController do
     conversations = Conversations.list_conversations(user_id)
 
     json(conn, %{
-      conversations: Enum.map(conversations, &serialize_conversation/1)
+      conversations:
+        Enum.map(
+          conversations,
+          &serialize_conversation(&1, user_id)
+        )
     })
   end
 
@@ -21,7 +25,7 @@ defmodule MensagemWeb.ConversationController do
         conn
         |> put_status(:created)
         |> json(%{
-          conversation: serialize_conversation(conversation)
+          conversation: serialize_conversation(conversation, user_id)
         })
 
       {:error, :not_a_contact} ->
@@ -61,18 +65,32 @@ defmodule MensagemWeb.ConversationController do
 
       conversation ->
         json(conn, %{
-          conversation: serialize_conversation(conversation)
+          conversation: serialize_conversation(conversation, user_id)
         })
     end
   end
 
-  defp serialize_conversation(conversation) do
+  defp serialize_conversation(conversation, user_id) do
+    other_participant =
+      Conversations.get_other_participant(user_id, conversation.id)
+
     %{
       id: conversation.id,
       type: conversation.type,
       name: conversation.name,
       inserted_at: conversation.inserted_at,
-      updated_at: conversation.updated_at
+      updated_at: conversation.updated_at,
+      contact: serialize_contact(other_participant)
+    }
+  end
+
+  defp serialize_contact(nil), do: nil
+
+  defp serialize_contact(user) do
+    %{
+      id: user.id,
+      name: user.name,
+      email: user.email
     }
   end
 end
