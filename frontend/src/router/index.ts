@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '../stores/auth'
 
+import ContactsView from '../views/ContactsView.vue'
 import ConversationsView from '../views/ConversationsView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -20,6 +21,15 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
+    },
+
+    {
+      path: '/contacts',
+      name: 'contacts',
+      component: ContactsView,
+      meta: {
+        requiresAuth: true,
+      },
     },
 
     {

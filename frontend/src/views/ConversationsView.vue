@@ -111,6 +111,8 @@ onBeforeUnmount(() => {
           {{ authStore.user.name }}
         </span>
 
+        <button @click="router.push('/contacts')">Contatos</button>
+
         <button @click="logout">Sair</button>
       </div>
     </header>
@@ -233,6 +235,15 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.user-info button {
+  background: #42b883;
+  color: white;
+}
+
+.user-info button:last-child {
+  background: #d32f2f;
 }
 
 button {
