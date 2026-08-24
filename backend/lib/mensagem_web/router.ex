@@ -38,6 +38,9 @@ defmodule MensagemWeb.Router do
          :create
 
     get "/users/available", ContactController, :available
+
+    get "/groups", GroupController, :index
+    post "/groups", GroupController, :create
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
