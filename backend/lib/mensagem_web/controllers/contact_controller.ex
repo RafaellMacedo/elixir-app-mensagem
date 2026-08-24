@@ -52,6 +52,16 @@ defmodule MensagemWeb.ContactController do
     end
   end
 
+  def available(conn, _params) do
+    user_id = conn.assigns.current_user_id
+
+    users = Contacts.list_available_users(user_id)
+
+    json(conn, %{
+      users: Enum.map(users, &serialize_user/1)
+    })
+  end
+
   defp serialize_user(user) do
     %{
       id: user.id,
