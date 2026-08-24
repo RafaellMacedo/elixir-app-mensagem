@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
 import { disconnectSocket } from '../services/socketService'
 
@@ -24,6 +24,8 @@ const messages = ref<Message[]>([])
 const loadingConversations = ref(true)
 const loadingMessages = ref(false)
 
+const messagesContainer = ref<HTMLElement | null>(null)
+
 const error = ref('')
 
 async function loadConversations() {
@@ -46,11 +48,27 @@ async function selectConversation(conversation: Conversation) {
 
   messages.value = await listMessages(conversation.id)
 
+  await nextTick()
+
+  scrollToBottom()
+
   joinConversation(conversation.id, handleRealtimeMessage)
 }
 
-function handleRealtimeMessage(message: RealtimeMessage) {
+async function handleRealtimeMessage(message: RealtimeMessage) {
   messages.value.push(message)
+
+  await nextTick()
+
+  scrollToBottom()
+}
+
+function scrollToBottom() {
+  if (!messagesContainer.value) {
+    return
+  }
+
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
 }
 
 function logout() {
@@ -117,8 +135,8 @@ onBeforeUnmount(() => {
               }}
             </strong>
 
-            <span>
-              {{ conversation.type }}
+            <span v-if="conversation.contact">
+              {{ conversation.contact.email }}
             </span>
           </li>
         </ul>
@@ -136,7 +154,7 @@ onBeforeUnmount(() => {
             </h2>
           </div>
 
-          <div class="messages">
+          <div ref="messagesContainer" class="messages">
             <p v-if="loadingMessages">Carregando mensagens...</p>
 
             <p v-else-if="messages.length === 0">Nenhuma mensagem.</p>
@@ -168,7 +186,7 @@ onBeforeUnmount(() => {
               @keyup.enter="handleSendMessage"
             />
 
-            <button @click="handleSendMessage">Enviar</button>
+            <button :disabled="!newMessage.trim()" @click="handleSendMessage">Enviar</button>
           </div>
         </template>
 
@@ -328,6 +346,11 @@ button {
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 6px;
+}
+
+.message-input button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .empty-chat {
