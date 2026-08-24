@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { disconnectSocket } from '../services/socketService'
 
@@ -16,6 +17,8 @@ import type { Message } from '../types/message'
 
 const authStore = useAuthStore()
 const newMessage = ref('')
+
+const router = useRouter()
 
 const conversations = ref<Conversation[]>([])
 const selectedConversation = ref<Conversation | null>(null)
@@ -71,8 +74,9 @@ function scrollToBottom() {
   messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
 }
 
-function logout() {
+async function logout() {
   authStore.logout()
+  await router.push('/login')
 }
 
 function handleSendMessage() {
