@@ -1,32 +1,42 @@
+```vue
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { useAuthStore } from '../stores/auth'
+import { register } from '../services/authService'
 
 const router = useRouter()
-const authStore = useAuthStore()
 
+const name = ref('')
 const email = ref('')
 const password = ref('')
+const passwordConfirmation = ref('')
+
 const error = ref('')
 const loading = ref(false)
 
-async function handleLogin() {
+async function handleRegister() {
   error.value = ''
+
+  if (password.value !== passwordConfirmation.value) {
+    error.value = 'As senhas não coincidem.'
+    return
+  }
+
   loading.value = true
 
   try {
-    await authStore.login({
+    await register({
+      name: name.value,
       email: email.value,
       password: password.value,
     })
 
-    await router.push('/conversations')
+    await router.push('/login')
   } catch (err) {
     console.error(err)
 
-    error.value = 'E-mail ou senha inválidos.'
+    error.value = 'Não foi possível criar a conta.'
   } finally {
     loading.value = false
   }
@@ -34,13 +44,19 @@ async function handleLogin() {
 </script>
 
 <template>
-  <main class="login">
-    <div class="login-card">
+  <main class="register">
+    <div class="register-card">
       <h1>Mensagem</h1>
 
-      <p class="subtitle">Entre na sua conta</p>
+      <p class="subtitle">Crie sua conta</p>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRegister">
+        <div class="field">
+          <label for="name">Nome</label>
+
+          <input id="name" v-model="name" type="text" autocomplete="name" required />
+        </div>
+
         <div class="field">
           <label for="email">E-mail</label>
 
@@ -54,7 +70,19 @@ async function handleLogin() {
             id="password"
             v-model="password"
             type="password"
-            autocomplete="current-password"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <label for="password-confirmation">Confirmar senha</label>
+
+          <input
+            id="password-confirmation"
+            v-model="passwordConfirmation"
+            type="password"
+            autocomplete="new-password"
             required
           />
         </div>
@@ -64,18 +92,19 @@ async function handleLogin() {
         </p>
 
         <button type="submit" :disabled="loading">
-          {{ loading ? 'Entrando...' : 'Entrar' }}
-        </button>
-        <button class="register-button" type="button" @click="router.push('/register')">
-          Criar uma conta
+          {{ loading ? 'Criando conta...' : 'Criar conta' }}
         </button>
       </form>
+
+      <button class="back-button" type="button" @click="router.push('/login')">
+        Já tenho uma conta
+      </button>
     </div>
   </main>
 </template>
 
 <style scoped>
-.login {
+.register {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -84,7 +113,7 @@ async function handleLogin() {
   background: #f5f7fb;
 }
 
-.login-card {
+.register-card {
   width: 100%;
   max-width: 400px;
   padding: 32px;
@@ -139,15 +168,16 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.register-button {
+.error {
+  margin-bottom: 16px;
+  color: #d32f2f;
+}
+
+.back-button {
   margin-top: 12px;
   background: transparent;
   color: #42b883;
   border: 1px solid #42b883;
 }
-
-.error {
-  margin-bottom: 16px;
-  color: #d32f2f;
-}
 </style>
+```
