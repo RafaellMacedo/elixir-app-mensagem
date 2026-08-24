@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-import { login as loginRequest } from '../services/authService'
+import { getMe, login as loginRequest } from '../services/authService'
+
 import type { LoginRequest, User } from '../types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -20,6 +21,20 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('@mensagem:token', response.token)
   }
 
+  async function loadUser() {
+    if (!token.value) {
+      return
+    }
+
+    try {
+      user.value = await getMe()
+    } catch (error) {
+      console.error('Unable to restore session', error)
+
+      logout()
+    }
+  }
+
   function logout() {
     token.value = null
     user.value = null
@@ -32,6 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     isAuthenticated,
     login,
+    loadUser,
     logout,
   }
 })
