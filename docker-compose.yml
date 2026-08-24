@@ -16,6 +16,18 @@ services:
     tty: true
     stdin_open: true
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: vue_frontend
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "5173:5173"
+    tty: true
+    stdin_open: true
+
   postgres:
     image: postgres:16
     container_name: elixir_postgres
