@@ -23,8 +23,7 @@ end
 config :mensagem, MensagemWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
-config :mensagem, Mensagem.Auth.Token,
-  secret_key: System.get_env("JWT_SECRET")
+config :mensagem, Mensagem.Auth.Token, secret_key: System.get_env("JWT_SECRET")
 
 if config_env() == :prod do
   database_url =

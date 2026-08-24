@@ -30,14 +30,14 @@ defmodule MensagemWeb.Router do
     get "/conversations/:id", ConversationController, :show
 
     get "/conversations/:conversation_id/messages",
-      MessageController,
-      :index
+        MessageController,
+        :index
 
     post "/conversations/:conversation_id/messages",
-      MessageController,
-      :create
+         MessageController,
+         :create
   end
-  
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:mensagem, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
