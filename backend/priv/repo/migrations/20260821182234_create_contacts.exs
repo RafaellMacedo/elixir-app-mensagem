@@ -12,9 +12,9 @@ defmodule Mensagem.Repo.Migrations.CreateContacts do
     create unique_index(:contacts, [:user_id, :contact_id])
 
     create constraint(
-      :contacts,
-      :user_cannot_add_itself,
-      check: "user_id != contact_id"
-    )
+             :contacts,
+             :user_cannot_add_itself,
+             check: "user_id != contact_id"
+           )
   end
 end

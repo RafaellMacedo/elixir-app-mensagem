@@ -12,44 +12,44 @@ defmodule MensagemWeb.ConversationChannel do
         {:error, %{reason: "unauthorized"}}
 
       _conversation ->
-      {:ok, assign(socket, :conversation_id, conversation_id)}
+        {:ok, assign(socket, :conversation_id, conversation_id)}
     end
   end
 
   @impl true
-  def handle_in("message", payload, socket) do
+  def handle_in("message", %{"content" => content}, socket) do
     user_id = socket.assigns.current_user_id
     conversation_id = socket.assigns.conversation_id
 
     case Conversations.send_message(
-            user_id,
-            conversation_id,
-            payload["content"]
-        ) do
-        {:ok, message} ->
+           user_id,
+           conversation_id,
+           content
+         ) do
+      {:ok, message} ->
         broadcast!(socket, "message", %{
-            id: message.id,
-            conversation_id: message.conversation_id,
-            sender_id: message.sender_id,
-            content: message.content,
-            inserted_at: message.inserted_at
+          id: message.id,
+          conversation_id: message.conversation_id,
+          sender_id: message.sender_id,
+          content: message.content,
+          inserted_at: message.inserted_at
         })
 
         {:reply, :ok, socket}
 
-        {:error, :not_found} ->
+      {:error, :not_found} ->
         {:reply, {:error, %{reason: "unauthorized"}}, socket}
 
-        {:error, changeset} ->
+      {:error, changeset} ->
         {:reply,
-        {:error,
-            %{
+         {:error,
+          %{
             reason: "invalid_message",
             details:
-                Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} ->
+              Ecto.Changeset.traverse_errors(changeset, fn {message, _opts} ->
                 message
-                end)
-            }}, socket}
+              end)
+          }}, socket}
     end
   end
 end

@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+
+import { disconnectSocket } from '../services/socketService'
 
 import { useAuthStore } from '../stores/auth'
 import { listConversations } from '../services/conversationService'
 import { listMessages } from '../services/messageService'
 
+import { joinConversation, leaveConversation, sendMessage } from '../services/channelService'
+
+import type { RealtimeMessage } from '../services/channelService'
+
 import type { Conversation } from '../types/conversation'
 import type { Message } from '../types/message'
 
 const authStore = useAuthStore()
+const newMessage = ref('')
 
 const conversations = ref<Conversation[]>([])
 const selectedConversation = ref<Conversation | null>(null)
@@ -36,27 +43,39 @@ async function loadConversations() {
 
 async function selectConversation(conversation: Conversation) {
   selectedConversation.value = conversation
-  messages.value = []
-  loadingMessages.value = true
-  error.value = ''
 
-  try {
-    messages.value = await listMessages(conversation.id)
-  } catch (err) {
-    console.error(err)
+  messages.value = await listMessages(conversation.id)
 
-    error.value = 'Não foi possível carregar as mensagens.'
-  } finally {
-    loadingMessages.value = false
-  }
+  joinConversation(conversation.id, handleRealtimeMessage)
+}
+
+function handleRealtimeMessage(message: RealtimeMessage) {
+  messages.value.push(message)
 }
 
 function logout() {
   authStore.logout()
 }
 
+function handleSendMessage() {
+  const content = newMessage.value.trim()
+
+  if (!content) {
+    return
+  }
+
+  sendMessage(content)
+
+  newMessage.value = ''
+}
+
 onMounted(() => {
   loadConversations()
+})
+
+onBeforeUnmount(() => {
+  leaveConversation()
+  disconnectSocket()
 })
 </script>
 
@@ -136,9 +155,14 @@ onMounted(() => {
           </div>
 
           <div class="message-input">
-            <input type="text" placeholder="Digite uma mensagem..." disabled />
+            <input
+              v-model="newMessage"
+              type="text"
+              placeholder="Digite uma mensagem..."
+              @keyup.enter="handleSendMessage"
+            />
 
-            <button disabled>Enviar</button>
+            <button @click="handleSendMessage">Enviar</button>
           </div>
         </template>
 

@@ -16,9 +16,7 @@ defmodule Mensagem.Conversations do
 
   def list_conversations(user_id) do
     Conversation
-    |> join(:inner, [c], p in ConversationParticipant,
-      on: p.conversation_id == c.id
-    )
+    |> join(:inner, [c], p in ConversationParticipant, on: p.conversation_id == c.id)
     |> where([c, p], p.user_id == ^user_id)
     |> order_by([c], desc: c.updated_at)
     |> Repo.all()
@@ -26,9 +24,7 @@ defmodule Mensagem.Conversations do
 
   def get_conversation(user_id, conversation_id) do
     Conversation
-    |> join(:inner, [c], p in ConversationParticipant,
-      on: p.conversation_id == c.id
-    )
+    |> join(:inner, [c], p in ConversationParticipant, on: p.conversation_id == c.id)
     |> where(
       [c, p],
       c.id == ^conversation_id and p.user_id == ^user_id
@@ -38,15 +34,15 @@ defmodule Mensagem.Conversations do
 
   def list_messages(user_id, conversation_id) do
     case get_conversation(user_id, conversation_id) do
-        nil ->
+      nil ->
         {:error, :not_found}
 
-        conversation ->
+      conversation ->
         messages =
-            Message
-            |> where([m], m.conversation_id == ^conversation.id)
-            |> order_by([m], asc: m.inserted_at)
-            |> Repo.all()
+          Message
+          |> where([m], m.conversation_id == ^conversation.id)
+          |> order_by([m], asc: m.inserted_at)
+          |> Repo.all()
 
         {:ok, messages}
     end
@@ -54,15 +50,15 @@ defmodule Mensagem.Conversations do
 
   def send_message(user_id, conversation_id, content) do
     case get_conversation(user_id, conversation_id) do
-        nil ->
+      nil ->
         {:error, :not_found}
 
-        conversation ->
+      conversation ->
         %Message{}
         |> Message.changeset(%{
-            conversation_id: conversation.id,
-            sender_id: user_id,
-            content: content
+          conversation_id: conversation.id,
+          sender_id: user_id,
+          content: content
         })
         |> Repo.insert()
     end
