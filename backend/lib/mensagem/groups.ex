@@ -3,6 +3,8 @@ defmodule Mensagem.Groups do
   alias Mensagem.Group
   alias Mensagem.GroupMember
   alias Mensagem.Repo
+  alias Mensagem.Conversation
+  alias Mensagem.ConversationParticipant
 
   import Ecto.Query
 
@@ -35,6 +37,21 @@ defmodule Mensagem.Groups do
         end
       end)
 
+      conversation =
+        %Conversation{}
+        |> Conversation.changeset(%{
+          type: "group",
+          name: name,
+          group_id: group.id
+        })
+        |> Repo.insert!()
+
+      add_participant!(conversation.id, user_id)
+
+      Enum.each(member_ids, fn member_id ->
+        add_participant!(conversation.id, member_id)
+      end)
+
       group
     end)
   end
@@ -49,6 +66,15 @@ defmodule Mensagem.Groups do
     %GroupMember{}
     |> GroupMember.changeset(%{
       group_id: group_id,
+      user_id: user_id
+    })
+    |> Repo.insert!()
+  end
+
+  defp add_participant!(conversation_id, user_id) do
+    %ConversationParticipant{}
+    |> ConversationParticipant.changeset(%{
+      conversation_id: conversation_id,
       user_id: user_id
     })
     |> Repo.insert!()

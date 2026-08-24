@@ -4,10 +4,13 @@ defmodule Mensagem.Conversation do
 
   alias Mensagem.Message
   alias Mensagem.ConversationParticipant
+  alias Mensagem.Group
 
   schema "conversations" do
     field :type, :string
     field :name, :string
+
+    belongs_to :group, Group
 
     has_many :participants, ConversationParticipant
     has_many :users, through: [:participants, :user]
@@ -18,7 +21,7 @@ defmodule Mensagem.Conversation do
 
   def changeset(conversation, attrs) do
     conversation
-    |> cast(attrs, [:type, :name])
+    |> cast(attrs, [:type, :name, :group_id])
     |> validate_required([:type])
     |> validate_inclusion(:type, ["private", "group"])
   end

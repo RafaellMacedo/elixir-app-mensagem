@@ -4,12 +4,15 @@ defmodule Mensagem.Group do
 
   alias Mensagem.User
   alias Mensagem.GroupMember
+  alias Mensagem.Conversation
 
   schema "groups" do
     field :name, :string
 
     belongs_to :creator, User
+
     has_many :group_members, GroupMember
+    has_one :conversation, Conversation
 
     timestamps()
   end

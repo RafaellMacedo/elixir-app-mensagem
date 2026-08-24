@@ -10,10 +10,9 @@ defmodule MensagemWeb.ConversationController do
 
     json(conn, %{
       conversations:
-        Enum.map(
-          conversations,
-          &serialize_conversation(&1, user_id)
-        )
+        Enum.map(conversations, fn conversation ->
+          serialize_conversation(conversation, user_id)
+        end)
     })
   end
 
@@ -71,17 +70,32 @@ defmodule MensagemWeb.ConversationController do
   end
 
   defp serialize_conversation(conversation, user_id) do
-    other_participant =
-      Conversations.get_other_participant(user_id, conversation.id)
+    case conversation.type do
+      "private" ->
+        contact =
+          Enum.find(conversation.participants, fn participant ->
+            participant.user_id != user_id
+          end)
 
-    %{
-      id: conversation.id,
-      type: conversation.type,
-      name: conversation.name,
-      inserted_at: conversation.inserted_at,
-      updated_at: conversation.updated_at,
-      contact: serialize_contact(other_participant)
-    }
+        %{
+          id: conversation.id,
+          name: nil,
+          type: conversation.type,
+          inserted_at: conversation.inserted_at,
+          updated_at: conversation.updated_at,
+          contact: serialize_contact(contact.user)
+        }
+
+      "group" ->
+        %{
+          id: conversation.id,
+          name: conversation.group.name,
+          type: conversation.type,
+          inserted_at: conversation.inserted_at,
+          updated_at: conversation.updated_at,
+          contact: nil
+        }
+    end
   end
 
   defp serialize_contact(nil), do: nil

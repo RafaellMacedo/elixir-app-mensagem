@@ -17,9 +17,15 @@ defmodule Mensagem.Conversations do
 
   def list_conversations(user_id) do
     Conversation
-    |> join(:inner, [c], p in ConversationParticipant, on: p.conversation_id == c.id)
+    |> join(:inner, [c], p in ConversationParticipant,
+      on: p.conversation_id == c.id
+    )
     |> where([c, p], p.user_id == ^user_id)
     |> order_by([c], desc: c.updated_at)
+    |> preload([
+      :group,
+      participants: :user
+    ])
     |> Repo.all()
   end
 
