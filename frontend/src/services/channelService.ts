@@ -94,7 +94,7 @@ export function sendMessage(content: string) {
     throw new Error('Conversation channel is not connected')
   }
 
-  channel.push('message', {
+  return channel.push('message', {
     content,
   })
 }
