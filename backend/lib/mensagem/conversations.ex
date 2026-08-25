@@ -72,18 +72,24 @@ defmodule Mensagem.Conversations do
         {:error, :not_found}
 
       conversation ->
-        case %Message{}
-            |> Message.changeset(%{
-              conversation_id: conversation.id,
-              sender_id: user_id,
-              content: content
-            })
-            |> Repo.insert() do
-          {:ok, message} ->
-            {:ok, Repo.preload(message, :sender)}
+        case can_send_message?(user_id, conversation) do
+          true ->
+            case Repo.insert(
+                  Message.changeset(%Message{}, %{
+                    conversation_id: conversation.id,
+                    sender_id: user_id,
+                    content: content
+                  })
+                ) do
+              {:ok, message} ->
+                {:ok, Repo.preload(message, :sender)}
 
-          {:error, changeset} ->
-            {:error, changeset}
+              {:error, changeset} ->
+                {:error, changeset}
+            end
+
+          false ->
+            {:error, :not_a_contact}
         end
     end
   end
@@ -149,7 +155,38 @@ defmodule Mensagem.Conversations do
         })
         |> Repo.insert()
 
-      conversation
+      Repo.preload(conversation, participants: :user)
     end)
+  end
+
+  defp can_send_message?(user_id, conversation) do
+    case conversation.type do
+      "group" ->
+        true
+
+      "private" ->
+        contact =
+          User
+          |> join(:inner, [u], p in ConversationParticipant,
+            on: p.user_id == u.id
+          )
+          |> where(
+            [u, p],
+            p.conversation_id == ^conversation.id and u.id != ^user_id
+          )
+          |> select([u], u.id)
+          |> Repo.one()
+
+        contact &&
+          Repo.exists?(
+            from c in Contact,
+              where:
+                c.user_id == ^user_id and
+                  c.contact_id == ^contact
+          )
+
+      _ ->
+        false
+    end
   end
 end

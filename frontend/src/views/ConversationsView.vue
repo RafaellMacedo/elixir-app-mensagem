@@ -5,8 +5,11 @@ import { useRouter } from 'vue-router'
 import { disconnectSocket } from '../services/socketService'
 
 import { useAuthStore } from '../stores/auth'
-import { listConversations } from '../services/conversationService'
+import { createConversation, listConversations } from '../services/conversationService'
+import { listContacts } from '../services/contactService'
 import { listMessages } from '../services/messageService'
+
+import type { User } from '../types/auth'
 
 import { joinConversation, leaveConversation, sendMessage } from '../services/channelService'
 
@@ -21,6 +24,8 @@ const newMessage = ref('')
 const router = useRouter()
 
 const conversations = ref<Conversation[]>([])
+const contacts = ref<User[]>([])
+
 const selectedConversation = ref<Conversation | null>(null)
 const messages = ref<Message[]>([])
 
@@ -36,13 +41,48 @@ async function loadConversations() {
   error.value = ''
 
   try {
-    conversations.value = await listConversations()
+    const [conversationsData, contactsData] = await Promise.all([
+      listConversations(),
+      listContacts(),
+    ])
+
+    conversations.value = conversationsData
+    contacts.value = contactsData
   } catch (err) {
     console.error(err)
 
     error.value = 'Não foi possível carregar as conversas.'
   } finally {
     loadingConversations.value = false
+  }
+}
+
+function getExistingConversation(contactId: number) {
+  return conversations.value.find(
+    (conversation) => conversation.type === 'private' && conversation.contact?.id === contactId,
+  )
+}
+
+async function startConversation(contact: User) {
+  error.value = ''
+
+  try {
+    const existingConversation = getExistingConversation(contact.id)
+
+    if (existingConversation) {
+      await selectConversation(existingConversation)
+      return
+    }
+
+    const conversation = await createConversation(contact.id)
+
+    conversations.value.unshift(conversation)
+
+    await selectConversation(conversation)
+  } catch (err) {
+    console.error(err)
+
+    error.value = 'Não foi possível iniciar a conversa.'
   }
 }
 
@@ -86,9 +126,29 @@ function handleSendMessage() {
     return
   }
 
-  sendMessage(content)
+  try {
+    const push = sendMessage(content)
 
-  newMessage.value = ''
+    push
+      .receive('ok', () => {
+        newMessage.value = ''
+      })
+      .receive('error', (response) => {
+        console.error('Erro ao enviar mensagem:', response)
+
+        if (response?.reason === 'not_a_contact') {
+          error.value = 'Você não possui mais este contato.'
+        } else {
+          error.value = 'Não foi possível enviar a mensagem.'
+        }
+      })
+      .receive('timeout', () => {
+        error.value = 'Não foi possível enviar a mensagem.'
+      })
+  } catch (err) {
+    console.error(err)
+    error.value = 'Não foi possível enviar a mensagem.'
+  }
 }
 
 onMounted(() => {
@@ -103,6 +163,12 @@ onBeforeUnmount(() => {
 
 <template>
   <main class="messenger">
+    <div v-if="error" class="error-popup">
+      <span>{{ error }}</span>
+
+      <button class="error-close" @click="error = ''">×</button>
+    </div>
+
     <header class="header">
       <h1>Mensagem</h1>
 
@@ -125,33 +191,58 @@ onBeforeUnmount(() => {
 
         <p v-if="loadingConversations">Carregando...</p>
 
-        <p v-else-if="conversations.length === 0">Nenhuma conversa encontrada.</p>
+        <template v-else>
+          <p v-if="conversations.length === 0 && contacts.length === 0">
+            Nenhuma conversa encontrada.
+          </p>
 
-        <ul v-else class="conversation-list">
-          <li
-            v-for="conversation in conversations"
-            :key="conversation.id"
-            class="conversation-item"
-            :class="{
-              active: selectedConversation?.id === conversation.id,
-            }"
-            @click="selectConversation(conversation)"
-          >
-            <div class="conversation-info">
-              <span class="conversation-type">
-                {{ conversation.type === 'group' ? '👥 Grupo' : '👤 Conversa' }}
-              </span>
+          <ul class="conversation-list">
+            <li
+              v-for="conversation in conversations"
+              :key="`conversation-${conversation.id}`"
+              class="conversation-item"
+              :class="{
+                active: selectedConversation?.id === conversation.id,
+              }"
+              @click="selectConversation(conversation)"
+            >
+              <div class="conversation-info">
+                <span class="conversation-type">
+                  {{ conversation.type === 'group' ? '👥 Grupo' : '👤 Conversa' }}
+                </span>
 
-              <strong>
-                {{ conversation.type === 'group' ? conversation.name : conversation.contact?.name }}
-              </strong>
+                <strong>
+                  {{
+                    conversation.type === 'group' ? conversation.name : conversation.contact?.name
+                  }}
+                </strong>
 
-              <span v-if="conversation.type === 'private' && conversation.contact">
-                {{ conversation.contact.email }}
-              </span>
-            </div>
-          </li>
-        </ul>
+                <span v-if="conversation.type === 'private' && conversation.contact">
+                  {{ conversation.contact.email }}
+                </span>
+              </div>
+            </li>
+
+            <li
+              v-for="contact in contacts.filter((contact) => !getExistingConversation(contact.id))"
+              :key="`contact-${contact.id}`"
+              class="conversation-item new-conversation"
+              @click="startConversation(contact)"
+            >
+              <div class="conversation-info">
+                <span class="conversation-type"> 👤 Novo contato </span>
+
+                <strong>
+                  {{ contact.name }}
+                </strong>
+
+                <span>
+                  {{ contact.email }}
+                </span>
+              </div>
+            </li>
+          </ul>
+        </template>
       </aside>
 
       <section class="chat">
@@ -219,10 +310,6 @@ onBeforeUnmount(() => {
         </div>
       </section>
     </div>
-
-    <p v-if="error" class="error">
-      {{ error }}
-    </p>
   </main>
 </template>
 
@@ -402,14 +489,51 @@ button {
   cursor: not-allowed;
 }
 
+.new-conversation {
+  border: 1px dashed #42b883;
+}
+
+.new-conversation:hover {
+  background: #f0faf6;
+}
+
 .empty-chat {
   margin: auto;
   text-align: center;
   color: #777;
 }
 
-.error {
-  padding: 12px 24px;
+.error-popup {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  max-width: 350px;
+  padding: 14px 16px;
+
+  background: #fff;
   color: #d32f2f;
+
+  border-left: 4px solid #d32f2f;
+  border-radius: 8px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.error-close {
+  padding: 0;
+  background: transparent;
+  color: #d32f2f;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.error-close:hover {
+  background: transparent;
 }
 </style>

@@ -2,6 +2,7 @@ defmodule MensagemWeb.ConversationChannel do
   use MensagemWeb, :channel
 
   alias Mensagem.Conversations
+  alias Mensagem.Repo
 
   @impl true
   def join("conversation:" <> conversation_id, _params, socket) do
@@ -27,6 +28,8 @@ defmodule MensagemWeb.ConversationChannel do
            content
          ) do
       {:ok, message} ->
+        message = Repo.preload(message, :sender)
+
         broadcast!(socket, "message", %{
           id: message.id,
           conversation_id: message.conversation_id,
@@ -44,6 +47,9 @@ defmodule MensagemWeb.ConversationChannel do
 
       {:error, :not_found} ->
         {:reply, {:error, %{reason: "unauthorized"}}, socket}
+
+      {:error, :not_a_contact} ->
+        {:reply, {:error, %{reason: "not_a_contact"}}, socket}
 
       {:error, changeset} ->
         {:reply,
