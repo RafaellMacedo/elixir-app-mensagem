@@ -1,142 +1,533 @@
 # Mensagem
 
-Backend de uma aplicação de mensagens em tempo real desenvolvido com **Elixir, Phoenix, Ecto e PostgreSQL**.
+Aplicação de mensagens em tempo real desenvolvida como parte de uma avaliação técnica.
 
-O projeto possui autenticação baseada em JWT, gerenciamento de contatos, conversas privadas, persistência de mensagens e comunicação em tempo real utilizando **Phoenix Channels e WebSockets**.
+O projeto foi construído com foco na implementação de uma aplicação completa, utilizando **Elixir e Phoenix no backend** e **Vue 3 + TypeScript no frontend**.
 
-O frontend será desenvolvido posteriormente utilizando **Vue 3 + TypeScript**.
+A aplicação permite que usuários se cadastrem, realizem login, adicionem contatos, iniciem conversas privadas, criem grupos e troquem mensagens em tempo real utilizando **Phoenix Channels e WebSockets**.
 
 ---
 
-## Stack
+# Como executar
+
+O projeto está estruturado como um monorepo contendo o backend Phoenix, o frontend Vue e a configuração do PostgreSQL através do Docker Compose.
+
+## Pré-requisitos
+
+Para executar o projeto é necessário ter instalado:
+
+- Docker
+- Docker Compose
+
+Verifique a instalação:
+
+```bash
+docker --version
+```
+
+```bash
+docker compose version
+```
+
+## Subindo os containers
+
+Na raiz do projeto, execute:
+
+```bash
+docker compose up --build
+```
+
+Esse comando irá criar e iniciar os containers da aplicação:
+
+- Backend Phoenix
+- Frontend Vue 3
+- PostgreSQL
+
+Após a inicialização, os serviços estarão disponíveis em:
+
+| Serviço     | Endereço                             |
+| ----------- | ------------------------------------ |
+| Frontend    | http://localhost:5173                |
+| Backend API | http://localhost:4000                |
+| PostgreSQL  | localhost:5432                       |
+| WebSocket   | ws://localhost:4000/socket/websocket |
+
+## Executando em segundo plano
+
+Caso queira iniciar os containers em modo detached:
+
+```bash
+docker compose up -d --build
+```
+
+Para acompanhar os logs:
+
+```bash
+docker compose logs -f
+```
+
+## Parando os containers
+
+Para parar os containers:
+
+```bash
+docker compose down
+```
+
+Caso seja necessário remover também os volumes:
+
+```bash
+docker compose down -v
+```
+
+> Atenção: o comando acima remove os dados persistidos do PostgreSQL.
+
+## Executando migrations
+
+Caso seja necessário executar as migrations manualmente:
+
+```bash
+docker compose exec backend mix ecto.migrate
+```
+
+## Acessando o container do backend
+
+```bash
+docker compose exec backend bash
+```
+
+Dentro do container, alguns comandos úteis são:
+
+```bash
+mix compile
+```
+
+```bash
+mix ecto.migrate
+```
+
+```bash
+mix phx.server
+```
+
+---
+
+# Sobre o projeto
+
+O **Mensagem** é uma aplicação de chat em tempo real que possui backend REST API, comunicação via WebSocket e interface web.
+
+O projeto foi desenvolvido utilizando:
 
 - Elixir
 - Phoenix
-- Phoenix Channels
 - Ecto
 - PostgreSQL
-- JWT
-- Joken
+- Phoenix Channels
 - WebSockets
+- JWT
+- Vue 3
+- TypeScript
+- Pinia
+- Vue Router
 - Docker
-- Vue 3 + TypeScript — frontend planejado
+
+A arquitetura separa claramente o frontend e o backend, utilizando HTTP para operações REST e WebSockets para comunicação em tempo real.
 
 ---
 
-## Arquitetura
+# Funcionalidades
 
-A aplicação possui duas formas principais de comunicação:
-
-### REST API
-
-```text
-Cliente
-   │
-   │ HTTP + JSON
-   ▼
-Phoenix API
-   │
-   ├── Auth
-   ├── Contacts
-   ├── Conversations
-   └── Messages
-          │
-          ▼
-      PostgreSQL
-```
-
-### Comunicação em tempo real
-
-```text
-                    Phoenix
-                       │
-                  UserSocket
-                       │
-                   JWT Auth
-                       │
-              ConversationChannel
-                       │
-                 conversation:ID
-                       │
-          ┌────────────┴────────────┐
-          │                         │
-       Usuário A                Usuário B
-       WebSocket                WebSocket
-          │                         │
-          └─────── broadcast ───────┘
-```
-
----
-
-## Funcionalidades implementadas
-
-### Usuários
+## Autenticação
 
 - Cadastro de usuários
 - Login
-- Identificação do usuário autenticado
 - Autenticação baseada em JWT
-
-### Contatos
-
-- Listagem de contatos
-- Adição de contatos
-- Remoção de contatos
-
-### Conversas privadas
-
-- Criação de conversas privadas
-- Validação de contato
-- Associação de participantes
-- Listagem das conversas do usuário
-- Consulta de conversa específica
-- Validação de participação na conversa
-
-### Mensagens
-
-- Criação de mensagens
-- Persistência no PostgreSQL
-- Associação da mensagem à conversa
-- Associação da mensagem ao usuário remetente
-- Histórico de mensagens
-- Ordenação cronológica
-- Validação do conteúdo da mensagem
-
-### WebSocket
-
-- `UserSocket` configurado
-- Endpoint `/socket` registrado
-- Autenticação JWT no WebSocket
-- Identificação do usuário através do JWT
-- `ConversationChannel` configurado
-- Join de conversas
-- Validação de participante no `join`
-- Envio de mensagens em tempo real
-- Persistência das mensagens recebidas via WebSocket
-- Broadcast das mensagens para os participantes da conversa
+- Identificação do usuário autenticado
+- Proteção das rotas da API
+- Persistência do usuário autenticado no frontend
+- Logout
+- Proteção de rotas no Vue Router
 
 ---
 
-# Autenticação
+## Contatos
 
-A autenticação utiliza **JWT** através da biblioteca Joken.
+O usuário pode gerenciar sua própria lista de contatos.
 
-O token contém informações do usuário, incluindo:
+Funcionalidades implementadas:
+
+- Listagem de contatos
+- Listagem de usuários disponíveis
+- Adição de contatos
+- Remoção de contatos
+- Validação para impedir operações indevidas sobre contatos de outros usuários
+
+---
+
+## Conversas privadas
+
+O usuário pode iniciar uma conversa com um contato.
+
+Funcionalidades:
+
+- Criação de conversas privadas
+- Busca de conversa existente entre dois usuários
+- Reutilização da conversa caso ela já exista
+- Associação dos participantes
+- Listagem das conversas do usuário
+- Consulta de conversa específica
+- Histórico de mensagens
+- Validação de participação na conversa
+
+Quando um contato é selecionado no frontend, uma conversa privada pode ser criada automaticamente caso ainda não exista.
+
+---
+
+## Grupos
+
+A aplicação permite a criação de grupos de conversa.
+
+Funcionalidades:
+
+- Criação de grupos
+- Definição do nome do grupo
+- Identificação do criador
+- Adição de contatos como membros
+- Validação dos participantes
+- Listagem dos grupos do usuário
+- Criação de uma conversa associada ao grupo
+- Envio de mensagens para os participantes do grupo
+
+As conversas privadas e as conversas em grupo são apresentadas juntas na lista principal de conversas.
+
+---
+
+## Mensagens
+
+As mensagens são persistidas no PostgreSQL.
+
+Funcionalidades:
+
+- Envio de mensagens
+- Persistência no banco de dados
+- Histórico de mensagens
+- Ordenação cronológica
+- Identificação do remetente
+- Validação do conteúdo
+- Limite de tamanho da mensagem
+- Associação da mensagem à conversa
+- Associação da mensagem ao usuário remetente
+
+O `sender_id` não é informado diretamente pelo cliente.
+
+O backend identifica o usuário através do JWT.
+
+Fluxo:
+
+```text
+JWT
+ │
+ ▼
+Usuário autenticado
+ │
+ ▼
+current_user_id
+ │
+ ▼
+sender_id
+```
+
+Isso evita que um cliente envie mensagens em nome de outro usuário.
+
+---
+
+# Mensagens em tempo real
+
+A comunicação em tempo real é implementada utilizando **Phoenix Channels e WebSockets**.
+
+Cada conversa possui um tópico próprio.
+
+Exemplo:
+
+```text
+conversation:1
+conversation:2
+conversation:3
+```
+
+Quando um usuário entra em uma conversa, o frontend realiza o join no channel correspondente.
+
+```text
+Frontend
+   │
+   │ join
+   ▼
+conversation:ID
+   │
+   ▼
+ConversationChannel
+```
+
+O backend verifica se o usuário possui permissão para participar da conversa.
+
+Caso não participe:
 
 ```json
 {
-  "user_id": 1,
-  "email": "rafael@email.com"
+  "reason": "unauthorized"
 }
 ```
 
-O mesmo mecanismo de autenticação é utilizado tanto pela API REST quanto pelo WebSocket.
+---
+
+## Fluxo de envio de mensagens
+
+Quando o usuário envia uma mensagem:
+
+```text
+Vue Frontend
+      │
+      │ WebSocket
+      ▼
+ConversationChannel
+      │
+      ▼
+Conversations.send_message
+      │
+      ▼
+PostgreSQL
+      │
+      ▼
+broadcast!
+      │
+      ├──────────────► Usuário A
+      │
+      └──────────────► Usuário B
+```
+
+A mensagem é persistida antes do broadcast.
+
+Dessa forma, os usuários recebem a mensagem em tempo real e o histórico permanece disponível caso a página seja recarregada.
+
+---
+
+# Segurança e validações
+
+Algumas regras foram implementadas no backend para garantir que os usuários só possam acessar recursos permitidos.
+
+## JWT
+
+As rotas protegidas exigem um token JWT válido.
+
+Exemplo:
+
+```http
+Authorization: Bearer JWT
+```
+
+---
+
+## WebSocket autenticado
+
+A conexão WebSocket também utiliza autenticação JWT.
+
+O token é enviado durante a conexão:
+
+```text
+ws://localhost:4000/socket/websocket?token=JWT&vsn=2.0.0
+```
+
+O `UserSocket` valida o token e identifica o usuário.
+
+```text
+WebSocket
+    │
+    ▼
+UserSocket.connect/3
+    │
+    ▼
+Validação JWT
+    │
+    ├── inválido → conexão recusada
+    │
+    └── válido
+          │
+          ▼
+    current_user_id
+```
+
+---
+
+## Participação em conversas
+
+Um usuário não pode entrar em qualquer conversa.
+
+Antes do join no Phoenix Channel, o backend verifica:
+
+```text
+conversation_id + user_id
+```
+
+Somente participantes da conversa podem entrar no channel.
+
+---
+
+## Conversas privadas
+
+Para criar uma conversa privada, o usuário deve possuir o outro participante em sua lista de contatos.
+
+Também foi implementada uma validação para impedir que mensagens sejam enviadas em uma conversa privada quando o vínculo de contato não existir mais.
+
+---
+
+# Arquitetura
+
+A aplicação possui três componentes principais:
+
+```text
+                    ┌───────────────────┐
+                    │   Vue 3 Frontend  │
+                    │   TypeScript      │
+                    └─────────┬─────────┘
+                              │
+                ┌─────────────┴─────────────┐
+                │                           │
+             HTTP REST                  WebSocket
+                │                           │
+                ▼                           ▼
+        ┌───────────────────────────────────────┐
+        │            Phoenix Backend            │
+        │                                       │
+        │  Controllers       Phoenix Channels   │
+        │  Contexts          UserSocket         │
+        │  Authentication    ConversationChannel│
+        └───────────────────┬───────────────────┘
+                            │
+                            ▼
+                     ┌─────────────┐
+                     │ PostgreSQL  │
+                     └─────────────┘
+```
+
+---
+
+# Backend
+
+O backend foi desenvolvido utilizando Phoenix.
+
+A estrutura utiliza contexts para organizar as regras de negócio.
+
+Principais módulos:
+
+```text
+Mensagem
+│
+├── Accounts
+├── Auth
+├── Contacts
+├── Conversations
+└── Groups
+```
+
+O contexto `Conversations` concentra regras relacionadas a:
+
+- Criação de conversas privadas
+- Busca de conversas existentes
+- Validação de participantes
+- Histórico de mensagens
+- Envio de mensagens
+- Validação de contatos em conversas privadas
+
+---
+
+# Frontend
+
+O frontend foi desenvolvido utilizando:
+
+- Vue 3
+- TypeScript
+- Vite
+- Pinia
+- Vue Router
+- Axios
+- Phoenix JavaScript Client
+
+As principais telas implementadas são:
+
+- Login
+- Cadastro
+- Conversas
+- Contatos
+- Grupos
+
+---
+
+## Fluxo de autenticação
+
+```text
+Login
+  │
+  ▼
+POST /api/auth/login
+  │
+  ▼
+JWT
+  │
+  ▼
+Auth Store
+  │
+  ▼
+Rotas protegidas
+```
+
+O Vue Router utiliza guards para impedir o acesso às páginas protegidas quando o usuário não está autenticado.
+
+---
+
+## Conversas
+
+A tela principal apresenta:
+
+- Lista de conversas privadas
+- Lista de conversas em grupo
+- Identificação do tipo de conversa
+- Histórico de mensagens
+- Identificação visual das mensagens enviadas pelo usuário
+- Atualização automática ao receber mensagens em tempo real
+- Scroll automático para novas mensagens
+
+---
+
+## Contatos
+
+Na tela de contatos, o usuário pode:
+
+- Visualizar seus contatos
+- Adicionar novos contatos
+- Remover contatos
+- Retornar para a tela de conversas
+
+Os contatos também podem ser utilizados para iniciar novas conversas privadas.
+
+---
+
+## Grupos
+
+A tela de grupos permite:
+
+- Criar um grupo
+- Informar o nome do grupo
+- Selecionar contatos participantes
+- Visualizar os grupos criados
+- Retornar para a lista de conversas
+
+Após a criação, o grupo também aparece na lista principal de conversas.
 
 ---
 
 # API REST
 
-## Auth
+## Autenticação
 
 ### Registrar usuário
 
@@ -154,6 +545,8 @@ Exemplo:
   "password": "123456"
 }
 ```
+
+---
 
 ### Login
 
@@ -186,7 +579,7 @@ Resposta:
 
 ---
 
-## Usuário autenticado
+### Usuário autenticado
 
 ```http
 GET /api/me
@@ -195,7 +588,7 @@ Authorization: Bearer JWT
 
 ---
 
-## Contatos
+# Contatos
 
 ### Listar contatos
 
@@ -212,6 +605,14 @@ Authorization: Bearer JWT
 Content-Type: application/json
 ```
 
+Exemplo:
+
+```json
+{
+  "contact_id": 2
+}
+```
+
 ### Remover contato
 
 ```http
@@ -221,7 +622,7 @@ Authorization: Bearer JWT
 
 ---
 
-## Conversas
+# Conversas
 
 ### Listar conversas
 
@@ -229,6 +630,35 @@ Authorization: Bearer JWT
 GET /api/conversations
 Authorization: Bearer JWT
 ```
+
+A resposta pode conter conversas privadas e conversas em grupo.
+
+Exemplo:
+
+```json
+{
+  "conversations": [
+    {
+      "id": 1,
+      "name": null,
+      "type": "private",
+      "contact": {
+        "id": 2,
+        "name": "João",
+        "email": "joao@email.com"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Grupo Teste",
+      "type": "group",
+      "contact": null
+    }
+  ]
+}
+```
+
+---
 
 ### Criar conversa privada
 
@@ -246,6 +676,8 @@ Exemplo:
 }
 ```
 
+---
+
 ### Consultar conversa
 
 ```http
@@ -255,7 +687,37 @@ Authorization: Bearer JWT
 
 ---
 
-## Mensagens
+# Grupos
+
+### Listar grupos
+
+```http
+GET /api/groups
+Authorization: Bearer JWT
+```
+
+### Criar grupo
+
+```http
+POST /api/groups
+Authorization: Bearer JWT
+Content-Type: application/json
+```
+
+Exemplo:
+
+```json
+{
+  "name": "Grupo Teste",
+  "member_ids": [2, 3]
+}
+```
+
+Os membros informados devem pertencer à lista de contatos do usuário criador.
+
+---
+
+# Mensagens
 
 ### Histórico de mensagens
 
@@ -266,7 +728,30 @@ Authorization: Bearer JWT
 
 As mensagens são retornadas em ordem cronológica.
 
-### Enviar mensagem
+Exemplo:
+
+```json
+{
+  "messages": [
+    {
+      "id": 1,
+      "content": "Olá!",
+      "conversation_id": 1,
+      "sender_id": 1,
+      "sender": {
+        "id": 1,
+        "name": "Rafael",
+        "email": "rafael@email.com"
+      },
+      "inserted_at": "2026-08-24T22:51:56Z"
+    }
+  ]
+}
+```
+
+---
+
+### Enviar mensagem via API
 
 ```http
 POST /api/conversations/:conversation_id/messages
@@ -282,66 +767,21 @@ Exemplo:
 }
 ```
 
-O `sender_id` não é enviado pelo cliente.
-
-Ele é obtido através do usuário autenticado:
-
-```text
-JWT
- ↓
-current_user_id
- ↓
-sender_id
-```
-
-Isso impede que um usuário tente enviar uma mensagem em nome de outro usuário.
-
 ---
 
 # WebSocket
 
-A comunicação em tempo real utiliza **Phoenix Channels**.
-
-O socket está disponível através do endpoint:
+A conexão WebSocket está disponível em:
 
 ```text
 ws://localhost:4000/socket/websocket
 ```
 
-O JWT é enviado como parâmetro:
+Com autenticação:
 
 ```text
 ws://localhost:4000/socket/websocket?token=JWT&vsn=2.0.0
 ```
-
----
-
-## Autenticação do WebSocket
-
-O `UserSocket` recebe o JWT e valida o token utilizando o mesmo mecanismo da API REST.
-
-Fluxo:
-
-```text
-WebSocket
-    │
-    ▼
-UserSocket.connect/3
-    │
-    ▼
-Token.verify_and_validate/2
-    │
-    ├── inválido → conexão recusada
-    │
-    └── válido
-          │
-          ▼
-    current_user_id
-```
-
----
-
-## Entrando em uma conversa
 
 Cada conversa possui seu próprio tópico:
 
@@ -351,310 +791,190 @@ conversation:2
 conversation:3
 ```
 
-Para entrar em uma conversa:
-
-```json
-["1", "1", "conversation:1", "phx_join", {}]
-```
-
-O servidor verifica se o usuário autenticado participa daquela conversa.
-
-Se não participar:
+Após entrar no tópico da conversa, o cliente pode enviar:
 
 ```json
 {
-  "reason": "unauthorized"
+  "content": "Olá!"
 }
 ```
 
-Se participar, o usuário entra no channel.
+O backend:
+
+1. Identifica o usuário através do JWT.
+2. Obtém a conversa através do socket.
+3. Valida a participação do usuário.
+4. Valida as regras de envio.
+5. Persiste a mensagem no PostgreSQL.
+6. Carrega os dados do remetente.
+7. Realiza o broadcast para os participantes.
 
 ---
 
-## Enviando mensagens em tempo real
-
-Depois de entrar no channel, o cliente pode enviar:
-
-```json
-[
-  "1",
-  "2",
-  "conversation:1",
-  "message",
-  {
-    "content": "Olá!"
-  }
-]
-```
-
-O servidor:
-
-1. identifica o usuário através do JWT;
-2. identifica a conversa através do channel;
-3. valida a participação;
-4. persiste a mensagem;
-5. realiza o broadcast para os participantes.
-
-Fluxo:
+# Estrutura do projeto
 
 ```text
-Cliente
-   │
-   │ message
-   ▼
-ConversationChannel
-   │
-   ▼
-Conversations.send_message/3
-   │
-   ▼
-PostgreSQL
-   │
-   ▼
-broadcast!
-   │
-   ├──────────────► Usuário A
-   │
-   └──────────────► Usuário B
+.
+├── backend/
+│   ├── lib/
+│   │   ├── mensagem/
+│   │   │   ├── auth/
+│   │   │   ├── accounts.ex
+│   │   │   ├── contact.ex
+│   │   │   ├── contacts.ex
+│   │   │   ├── conversation.ex
+│   │   │   ├── conversation_participant.ex
+│   │   │   ├── conversations.ex
+│   │   │   ├── group.ex
+│   │   │   ├── group_member.ex
+│   │   │   ├── groups.ex
+│   │   │   ├── message.ex
+│   │   │   └── user.ex
+│   │   │
+│   │   └── mensagem_web/
+│   │       ├── channels/
+│   │       │   ├── conversation_channel.ex
+│   │       │   └── user_socket.ex
+│   │       │
+│   │       ├── controllers/
+│   │       │   ├── auth_controller.ex
+│   │       │   ├── contact_controller.ex
+│   │       │   ├── conversation_controller.ex
+│   │       │   ├── group_controller.ex
+│   │       │   └── message_controller.ex
+│   │       │
+│   │       ├── plugs/
+│   │       │   └── auth_plug.ex
+│   │       │
+│   │       ├── endpoint.ex
+│   │       └── router.ex
+│   │
+│   └── priv/
+│       └── repo/
+│           └── migrations/
+│
+├── frontend/
+│   └── src/
+│       ├── services/
+│       ├── stores/
+│       ├── types/
+│       ├── views/
+│       └── router/
+│
+└── docker-compose.yml
 ```
-
----
-
-# Segurança
-
-Algumas decisões importantes da implementação:
-
-### JWT
-
-Todas as rotas protegidas exigem autenticação.
-
-### WebSocket
-
-O WebSocket também exige um JWT válido.
-
-### Participação na conversa
-
-Um usuário autenticado não pode entrar em qualquer conversa.
-
-O `ConversationChannel` verifica:
-
-```text
-conversation_id + user_id
-```
-
-antes de permitir o `join`.
-
-### Remetente da mensagem
-
-O cliente não informa o `sender_id`.
-
-O servidor utiliza:
-
-```elixir
-socket.assigns.current_user_id
-```
-
-Isso evita falsificação do remetente.
 
 ---
 
 # Testes realizados
 
-O backend foi validado manualmente utilizando a API REST e WebSocket.
+O projeto foi validado manualmente utilizando múltiplos usuários autenticados simultaneamente.
 
-Foram testados:
+Foram realizados testes de:
 
+- Cadastro de usuários
 - Login com JWT
-- Consulta de usuário autenticado
-- Listagem de conversas
+- Consulta do usuário autenticado
+- Proteção de rotas
+- Adição de contatos
+- Remoção de contatos
+- Criação de conversas privadas
+- Reutilização de conversas existentes
+- Criação de grupos
+- Adição de participantes ao grupo
+- Listagem de conversas privadas e grupos
+- Histórico de mensagens
+- Persistência no PostgreSQL
 - Conexão WebSocket autenticada
-- Join de conversa
-- Validação de participante
-- Envio de mensagem via WebSocket
-- Persistência da mensagem
-- Broadcast para outro usuário
-- Comunicação bidirecional entre dois usuários
-
-Exemplo validado:
-
-```text
-Rafael
-   │
-   │ "Olá João!"
-   ▼
-Phoenix
-   │
-   ├── PostgreSQL
-   │
-   └── broadcast
-          │
-          ▼
-        João
-```
-
-João recebeu a mensagem em tempo real através do WebSocket.
+- Join em conversas
+- Validação de participação
+- Envio de mensagens privadas
+- Envio de mensagens em grupos
+- Broadcast de mensagens
+- Comunicação em tempo real entre dois usuários
+- Atualização da interface após recebimento de mensagens
+- Validação para impedir o envio em conversas privadas sem vínculo de contato
 
 ---
 
-# Como executar
+# Principais conceitos explorados
 
-O backend pode ser executado utilizando Docker ou diretamente no ambiente Elixir.
+Durante o desenvolvimento deste projeto foram explorados conceitos importantes do ecossistema Elixir e Phoenix:
 
-Para iniciar o servidor Phoenix:
+- Programação funcional
+- Pattern Matching
+- Imutabilidade
+- Pipelines
+- Tuples `{:ok, value}` e `{:error, reason}`
+- Ecto Schemas
+- Changesets
+- Ecto Queries
+- Transactions
+- Phoenix Controllers
+- Phoenix Contexts
+- Plug
+- JWT
+- Phoenix Channels
+- WebSockets
+- Broadcast em tempo real
+- Comunicação entre frontend e backend
 
-```bash
-mix phx.server
-```
+No frontend:
 
-O servidor ficará disponível em:
-
-```text
-http://localhost:4000
-```
-
-WebSocket:
-
-```text
-ws://localhost:4000/socket/websocket
-```
-
----
-
-# Estrutura principal
-
-```text
-lib/
-├── mensagem/
-│   ├── auth/
-│   │   └── token.ex
-│   ├── accounts.ex
-│   ├── contacts.ex
-│   ├── contact.ex
-│   ├── conversations.ex
-│   ├── conversation.ex
-│   ├── conversation_participant.ex
-│   ├── message.ex
-│   ├── user.ex
-│   └── repo.ex
-│
-└── mensagem_web/
-    ├── channels/
-    │   ├── conversation_channel.ex
-    │   └── user_socket.ex
-    ├── controllers/
-    │   ├── auth_controller.ex
-    │   ├── contact_controller.ex
-    │   ├── conversation_controller.ex
-    │   └── message_controller.ex
-    ├── plugs/
-    │   └── auth_plug.ex
-    ├── endpoint.ex
-    └── router.ex
-```
+- Composition API
+- TypeScript
+- Pinia
+- Vue Router
+- Navigation Guards
+- Axios
+- WebSockets
+- Gerenciamento de estado
+- Comunicação REST API
 
 ---
 
-# Próximos passos
+# Status do projeto
 
-O backend principal está funcional.
+O projeto possui uma primeira versão funcional da aplicação de mensagens.
 
-As próximas etapas planejadas são:
+### Backend
 
-- [ ] Criar frontend com Vue 3
-- [ ] Configurar TypeScript
-- [ ] Criar tela de login
-- [ ] Integrar autenticação JWT
-- [ ] Criar lista de conversas
-- [ ] Criar tela de chat
-- [ ] Integrar histórico de mensagens
-- [ ] Integrar WebSocket
-- [ ] Implementar envio de mensagens
-- [ ] Implementar recebimento em tempo real
-- [ ] Implementar logout
-- [ ] Melhorar UX e tratamento de erros
+- [x] Autenticação JWT
+- [x] Usuários
+- [x] Contatos
+- [x] Conversas privadas
+- [x] Grupos
+- [x] Persistência de mensagens
+- [x] Histórico de mensagens
+- [x] Phoenix Channels
+- [x] WebSocket autenticado
+- [x] Mensagens em tempo real
+- [x] Validações de acesso
+
+### Frontend
+
+- [x] Vue 3
+- [x] TypeScript
+- [x] Login
+- [x] Cadastro
+- [x] Autenticação
+- [x] Proteção de rotas
+- [x] Contatos
+- [x] Grupos
+- [x] Lista de conversas
+- [x] Conversas privadas
+- [x] Conversas em grupo
+- [x] Histórico de mensagens
+- [x] Envio de mensagens
+- [x] Recebimento de mensagens em tempo real
+- [x] Logout
 
 ---
 
-# Status
+# Autor
 
-**Backend:** concluído para a primeira versão do chat em tempo real.
+**Rafael Macedo**
 
-**Frontend:** próximo passo — Vue 3 + TypeScript.
+Projeto desenvolvido como parte de uma avaliação técnica, com o objetivo de demonstrar conhecimentos em:
 
-# Dia 1 — Estrutura e autenticação
-
-Instalar/configurar Elixir e Phoenix
-Criar o monorepo
-Criar backend
-Configurar PostgreSQL
-Criar User
-Registro
-Login
-JWT
-Usuário autenticado
-
-# Dia 2 — Contatos e conversas
-
-CRUD de contatos
-Criar conversa privada
-Criar grupos
-Adicionar participantes
-Listar conversas
-Persistência de mensagens
-
-# Dia 3 — Tempo real
-
-Phoenix Channels
-Entrar em uma conversa
-Enviar mensagens
-Broadcast
-Atualização em tempo real
-
-# Dia 4 — Frontend Vue
-
-Setup Vue + TypeScript
-Login
-Layout baseado nas telas
-Lista de conversas
-Tela de chat
-Integração REST
-
-# Dia 5 — WebSocket e finalização
-
-Conectar Vue ao Phoenix Channel
-Atualização em tempo real
-Testar fluxo completo
-Docker
-README
-Revisão final
-
-# 1. Usuários e contatos ← próxima etapa
-
-Listar usuários disponíveis
-Adicionar usuário aos contatos
-Remover contato
-Listar meus contatos
-Garantir que um usuário só altere os próprios contatos
-
-# 2. Conversas privadas
-
-Criar/iniciar conversa com um contato
-Persistir conversa
-Persistir mensagens
-Listar minhas conversas
-Buscar histórico cronológico
-
-# 3. Grupos
-
-Criar grupo
-Definir nome e criador
-Adicionar contatos como membros
-Listar grupos
-Enviar mensagens no grupo
-Histórico persistido
-
-# 4. Tempo real
-
-Aqui entra uma das partes mais interessantes do Phoenix:
-
-Phoenix Channels / WebSockets
+**Elixir • Phoenix • PostgreSQL • REST API • Phoenix Channels • WebSockets • Vue 3 • TypeScript • Docker**
