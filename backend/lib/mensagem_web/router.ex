@@ -36,6 +36,11 @@ defmodule MensagemWeb.Router do
     post "/conversations/:conversation_id/messages",
          MessageController,
          :create
+
+    get "/users/available", ContactController, :available
+
+    get "/groups", GroupController, :index
+    post "/groups", GroupController, :create
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

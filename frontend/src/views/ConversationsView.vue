@@ -111,6 +111,10 @@ onBeforeUnmount(() => {
           {{ authStore.user.name }}
         </span>
 
+        <button @click="router.push('/contacts')">Contatos</button>
+
+        <button @click="router.push('/groups')">Grupos</button>
+
         <button @click="logout">Sair</button>
       </div>
     </header>
@@ -133,15 +137,19 @@ onBeforeUnmount(() => {
             }"
             @click="selectConversation(conversation)"
           >
-            <strong>
-              {{
-                conversation.contact?.name || conversation.name || `Conversa #${conversation.id}`
-              }}
-            </strong>
+            <div class="conversation-info">
+              <span class="conversation-type">
+                {{ conversation.type === 'group' ? '👥 Grupo' : '👤 Conversa' }}
+              </span>
 
-            <span v-if="conversation.contact">
-              {{ conversation.contact.email }}
-            </span>
+              <strong>
+                {{ conversation.type === 'group' ? conversation.name : conversation.contact?.name }}
+              </strong>
+
+              <span v-if="conversation.type === 'private' && conversation.contact">
+                {{ conversation.contact.email }}
+              </span>
+            </div>
           </li>
         </ul>
       </aside>
@@ -173,6 +181,16 @@ onBeforeUnmount(() => {
               }"
             >
               <div class="message">
+                <strong
+                  v-if="
+                    selectedConversation.type === 'group' &&
+                    message.sender_id !== authStore.user?.id
+                  "
+                  class="sender-name"
+                >
+                  {{ message.sender.name }}
+                </strong>
+
                 <p>{{ message.content }}</p>
 
                 <small>
@@ -235,6 +253,15 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 
+.user-info button {
+  background: #42b883;
+  color: white;
+}
+
+.user-info button:last-child {
+  background: #d32f2f;
+}
+
 button {
   padding: 8px 16px;
   border: 0;
@@ -258,6 +285,17 @@ button {
 
 .sidebar h2 {
   margin-top: 0;
+}
+
+.conversation-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conversation-type {
+  font-size: 12px;
+  color: #888;
 }
 
 .conversation-list {
@@ -330,6 +368,13 @@ button {
 
 .message p {
   margin: 0 0 5px;
+}
+
+.sender-name {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: #42b883;
 }
 
 .message small {

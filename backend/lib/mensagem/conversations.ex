@@ -17,9 +17,15 @@ defmodule Mensagem.Conversations do
 
   def list_conversations(user_id) do
     Conversation
-    |> join(:inner, [c], p in ConversationParticipant, on: p.conversation_id == c.id)
+    |> join(:inner, [c], p in ConversationParticipant,
+      on: p.conversation_id == c.id
+    )
     |> where([c, p], p.user_id == ^user_id)
     |> order_by([c], desc: c.updated_at)
+    |> preload([
+      :group,
+      participants: :user
+    ])
     |> Repo.all()
   end
 
@@ -53,6 +59,7 @@ defmodule Mensagem.Conversations do
           Message
           |> where([m], m.conversation_id == ^conversation.id)
           |> order_by([m], asc: m.inserted_at)
+          |> preload(:sender)
           |> Repo.all()
 
         {:ok, messages}
@@ -65,13 +72,19 @@ defmodule Mensagem.Conversations do
         {:error, :not_found}
 
       conversation ->
-        %Message{}
-        |> Message.changeset(%{
-          conversation_id: conversation.id,
-          sender_id: user_id,
-          content: content
-        })
-        |> Repo.insert()
+        case %Message{}
+            |> Message.changeset(%{
+              conversation_id: conversation.id,
+              sender_id: user_id,
+              content: content
+            })
+            |> Repo.insert() do
+          {:ok, message} ->
+            {:ok, Repo.preload(message, :sender)}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
     end
   end
 

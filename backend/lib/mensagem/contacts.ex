@@ -31,4 +31,18 @@ defmodule Mensagem.Contacts do
         Repo.delete(contact)
     end
   end
+
+  def list_available_users(user_id) do
+    User
+    |> where([u], u.id != ^user_id)
+    |> where(
+      [u],
+      u.id not in subquery(
+        from c in Contact,
+          where: c.user_id == ^user_id,
+          select: c.contact_id
+      )
+    )
+    |> Repo.all()
+  end
 end
