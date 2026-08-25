@@ -59,6 +59,7 @@ defmodule Mensagem.Conversations do
           Message
           |> where([m], m.conversation_id == ^conversation.id)
           |> order_by([m], asc: m.inserted_at)
+          |> preload(:sender)
           |> Repo.all()
 
         {:ok, messages}
@@ -71,13 +72,19 @@ defmodule Mensagem.Conversations do
         {:error, :not_found}
 
       conversation ->
-        %Message{}
-        |> Message.changeset(%{
-          conversation_id: conversation.id,
-          sender_id: user_id,
-          content: content
-        })
-        |> Repo.insert()
+        case %Message{}
+            |> Message.changeset(%{
+              conversation_id: conversation.id,
+              sender_id: user_id,
+              content: content
+            })
+            |> Repo.insert() do
+          {:ok, message} ->
+            {:ok, Repo.preload(message, :sender)}
+
+          {:error, changeset} ->
+            {:error, changeset}
+        end
     end
   end
 

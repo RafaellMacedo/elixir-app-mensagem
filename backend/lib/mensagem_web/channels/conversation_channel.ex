@@ -32,7 +32,12 @@ defmodule MensagemWeb.ConversationChannel do
           conversation_id: message.conversation_id,
           sender_id: message.sender_id,
           content: message.content,
-          inserted_at: message.inserted_at
+          inserted_at: message.inserted_at,
+          sender: %{
+            id: message.sender.id,
+            name: message.sender.name,
+            email: message.sender.email
+          }
         })
 
         {:reply, :ok, socket}

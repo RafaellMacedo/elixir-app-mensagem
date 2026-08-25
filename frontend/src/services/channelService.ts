@@ -1,4 +1,5 @@
 import type { Channel } from 'phoenix'
+import type { User } from '../types/auth'
 
 import { connectSocket, getSocket, setOnReconnect } from './socketService'
 
@@ -8,6 +9,7 @@ export interface RealtimeMessage {
   sender_id: number
   content: string
   inserted_at: string
+  sender: User
 }
 
 let channel: Channel | null = null

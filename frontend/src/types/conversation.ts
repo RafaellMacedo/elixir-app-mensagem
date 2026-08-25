@@ -1,8 +1,4 @@
-export interface Contact {
-  id: number
-  name: string
-  email: string
-}
+import type { User } from './auth'
 
 export interface Conversation {
   id: number
@@ -10,7 +6,13 @@ export interface Conversation {
   type: 'private' | 'group'
   inserted_at: string
   updated_at: string
-  contact: Contact | null
+  contact: User | null
+}
+
+export interface Contact {
+  id: number
+  name: string
+  email: string
 }
 
 export interface ConversationsResponse {
